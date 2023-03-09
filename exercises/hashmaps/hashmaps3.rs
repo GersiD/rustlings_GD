@@ -14,15 +14,35 @@
 
 // Execute `rustlings hint hashmaps3` or use the `hint` watch subcommand for a hint.
 
-// I AM NOT DONE
-
 use std::collections::HashMap;
 
 // A structure to store team name and its goal details.
+#[derive(Clone)]
 struct Team {
     name: String,
     goals_scored: u8,
     goals_conceded: u8,
+}
+
+impl Team {
+    fn new(name: String) -> Team {
+        Team {
+            name,
+            goals_scored: 0,
+            goals_conceded: 0,
+        }
+    }
+    fn update_score(&mut self, goals_scored: u8, goals_conceded: u8) {
+        self.goals_scored += goals_scored;
+        self.goals_conceded += goals_conceded;
+    }
+}
+
+fn get_team_or_default(scores: &HashMap<String, Team>, team_name: &String) -> Team {
+    match scores.get(team_name) {
+        Some(team) => team.to_owned(),
+        None => Team::new(team_name.to_owned()),
+    }
 }
 
 fn build_scores_table(results: String) -> HashMap<String, Team> {
@@ -35,23 +55,17 @@ fn build_scores_table(results: String) -> HashMap<String, Team> {
         let team_1_score: u8 = v[2].parse().unwrap();
         let team_2_name = v[1].to_string();
         let team_2_score: u8 = v[3].parse().unwrap();
-        let team1 = Team {
-            name: team_1_name.clone(),
-            goals_scored: team_1_score + scores.get(&team_1_name).unwrap_or(&0),
-            goals_conceded: team_2_score + scores.get(&team_1_name).unwrap_or(&0),
-        };
-        let team2 = Team {
-            name: team_2_name.clone(),
-            goals_scored: team_2_score,
-            goals_conceded: team_1_score,
-        };
+        let mut team1 = get_team_or_default(&scores, &team_1_name);
+        let mut team2 = get_team_or_default(&scores, &team_2_name);
+        team1.update_score(team_1_score, team_2_score);
+        team2.update_score(team_2_score, team_1_score);
         // TODO: Populate the scores table with details extracted from the
         // current line. Keep in mind that goals scored by team_1
         // will be the number of goals conceded from team_2, and similarly
         // goals scored by team_2 will be the number of goals conceded by
         // team_1.
-        scores.entry(team_1_name).or_insert(team1);
-        scores.entry(team_2_name).or_insert(team2);
+        scores.insert(team_1_name, team1);
+        scores.insert(team_2_name, team2);
     }
     scores
 }
